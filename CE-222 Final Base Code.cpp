@@ -1,22 +1,31 @@
 #include<iostream>
 #include<string>
 #include<cstdlib> // for random number generator
+#include<random>
 using namespace std;
 
 
 
 class Character { // base character class, to be inherited from
 protected:
+protected:
 	int health;
 	int attack;
 	int defense;
+	int strengthBonus = 0; // how much extra attack is active
+	int strengthTurns = 0; // how many turns left;
 	string type; // light, med, etc
 public:
 	Character(string t, int h, int a, int d) : type(t), health(h), attack(a), defense(d) {}
 	virtual ~Character() {}
 
 	virtual void attackTarget(Character& target) { // call this when attacking
-		int damage = attack - target.defense + (rand() % 5);
+		random_device rd;
+		mt19937 gen(rd());
+		uniform_int_distribution<int> dist(-5, 10);
+		int random = dist(gen); // a more maluable way to choose a random number
+
+		int damage = (attack + strengthBonus) - target.defense + random;
 		if (damage < 1)
 			damage = 1;
 		target.health -= damage; // new health is health - damage done
@@ -26,6 +35,25 @@ public:
 	void heal() {
 		health += 15;
 		cout << "You healed 15 HP!" << endl;
+	}
+
+	void strength() {
+		strengthBonus += 5;
+		strengthTurns += 4;
+		cout << "You gained +5 attack for 3 turns!" << endl;
+	}
+
+	void updateEffects() 
+	{
+		if (strengthTurns > 0) 
+		{
+			strengthTurns--;
+			if (strengthTurns == 0) 
+			{
+				strengthBonus = 0;
+				cout << "Strength boost wore off!" << endl;
+			}
+		}
 	}
 
 	bool isAlive() {
@@ -48,7 +76,7 @@ public:
 // character types, could be whatever
 class Light : public Character { // Light class, low health, high attack, low defense
 public:
-	Light() : Character("Light", 80, 18, 5) {} 
+	Light() : Character("Light", 80, 18, 5) {}
 };
 
 class Medium : public Character { // Medium class, med health, med attack, med defense
@@ -72,6 +100,8 @@ int main() {
 	Character* enemy;
 
 	int choice;
+	int strengthPotAmount = 3;
+	int healthPotAmount = 5;
 
 	cout << "Choose your character type: " << endl;
 	cout << "1. Light" << endl;
@@ -98,7 +128,7 @@ int main() {
 
 		cout << "\nChoose an action:" << endl;
 		cout << "1. Attack" << endl;
-		cout << "2. Heal" << endl;
+		cout << "2. Use Potion" << endl;
 		cout << "3. Quit" << endl;
 		cout << "Choice: ";
 		cin >> action;
@@ -110,7 +140,40 @@ int main() {
 			cout << "Enemy HP: " << enemy->getHealth() << endl;
 		}
 		else if (action == 2) {
-			player->heal();
+			int potionSelect;
+
+			cout << "\nSelect Potion Type to use: " << endl;
+			cout << "1. Heal" << "(" << healthPotAmount << " potions remaining)" << endl;
+			cout << "2. Strength" << "(" << strengthPotAmount << " potions remaining)" << endl;
+			cout << "Choice: ";
+			cin >> potionSelect;
+			
+			if (potionSelect == 1)
+			{
+				if (healthPotAmount > 0)
+				{ 
+					player->heal();
+					healthPotAmount--;
+				}
+				
+				else
+					cout << "Out of health potions, you lose your turn." << endl;
+			}
+
+			else if (potionSelect == 2)
+			{
+				if (strengthPotAmount > 0)
+				{
+					player->strength();
+					strengthPotAmount--;
+				}
+
+				else
+					cout << "Out of strength potions, you lose your turn." << endl;
+			}
+			
+			else
+				cout << "Invalid choice, you lose your turn." << endl;
 		}
 		else if (action == 3) {
 			cout << "Exiting game..." << endl;
@@ -125,6 +188,9 @@ int main() {
 		cout << "\nEnemy Attacks!" << endl;
 		enemy->attackTarget(*player);
 		cout << "Player HP: " << player->getHealth() << endl;
+
+		player->updateEffects();
+		enemy->updateEffects();
 	}
 
 	if (player->isAlive())
