@@ -24,7 +24,11 @@ public:
 		mt19937 gen(rd());
 		uniform_int_distribution<int> dist(-5, 10);
 		int random = dist(gen); // a more maluable way to choose a random number
-
+		if (rand() % 5 == 0)
+		{
+			cout << "Attack has missed!" << endl;
+			return;
+		}
 		int damage = (attack + strengthBonus) - target.defense + random;
 		if (damage < 1)
 			damage = 1;
