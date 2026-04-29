@@ -18,115 +18,114 @@ using namespace std;
 
 class Character { // base character class, to be inherited from
 protected:
-protected:
-	int health;
-	int attack;
-	int defense;
-	int strengthBonus = 0; // how much extra attack is active
-	int strengthTurns = 0; // how many turns left;
-	string type; // light, med, etc
+    int health;
+    int attack;
+    int defense;
+    int strengthBonus = 0; // how much extra attack is active
+    int strengthTurns = 0; // how many turns left;
+    string type; // light, med, etc
     string label = "Player";
 public:
-	Character(string t, int h, int a, int d) : type(t), health(h), attack(a), defense(d) {}
-	virtual ~Character() {}
+    Character(string t, int h, int a, int d) : type(t), health(h), attack(a), defense(d) {}
+    virtual ~Character() {}
 
     void setLabel(string l) {
         label = l;
     }
 
-	virtual void attackTarget(Character& target) { // call this when attacking
-		random_device rd;
-		mt19937 gen(rd());
-		uniform_int_distribution<int> dist(-5, 10);
-		int random = dist(gen); // a more maluable way to choose a random number
-		if (rand() % 5 == 0)
-		{
-			cout << YELLOW <<  "Attack has missed!" << RESET << endl;
-			return;
-		}
-		int damage = (attack + strengthBonus) - target.defense + random;
-		if (damage < 1)
-			damage = 1;
-		target.health -= damage; // new health is health - damage done
-		cout << "Attack did " << RED << damage << RESET << " damage!" << endl;
-	}
+    virtual void attackTarget(Character& target) { // call this when attacking
+        random_device rd;
+        mt19937 gen(rd());
+        uniform_int_distribution<int> dist(-5, 10);
+        int random = dist(gen); // a more maluable way to choose a random number
+        if (rand() % 5 == 0)
+        {
+            cout << YELLOW << "Attack has missed!" << RESET << endl;
+            return;
+        }
+        int damage = (attack + strengthBonus) - target.defense + random;
+        if (damage < 1)
+            damage = 1;
+        target.health -= damage; // new health is health - damage done
+        cout << "Attack did " << RED << damage << RESET << " damage!" << endl;
+    }
 
-	void heal() {
-		health += 15;
-		cout << GREEN << label << " healed 15 HP!" << RESET << endl;
-	}
+    void heal() {
+        health += 15;
+        cout << GREEN << label << " healed 15 HP!" << RESET << endl;
+    }
 
-	void strength() {
-		strengthBonus += 5;
-		strengthTurns += 4;
-		cout << MAGENTA << label << " gained +5 attack for 3 turns!" << RESET << endl;
-	}
+    void strength() {
+        strengthBonus += 5;
+        strengthTurns += 3;
+        cout << MAGENTA << label << " gained +5 attack for 3 turns!" << RESET << endl;
+    }
 
-	void updateEffects()
-	{
-		if (strengthTurns > 0)
-		{
-			cout << "Strength for " << MAGENTA << strengthTurns - 1 << RESET << " remaining turns!!" << endl;
-			strengthTurns--;
-			if (strengthTurns == 0)
-			{
-				strengthBonus = 0;
-				cout << MAGENTA << label << "Strength boost wore off!" << RESET << endl;
-			}
-		}
-	}
+    void updateEffects()
+    {
+        if (strengthTurns > 0)
+        {
+            cout << "Strength for " << MAGENTA << strengthTurns - 1 << RESET << " remaining turns!!" << endl;
+            strengthTurns--;
+            if (strengthTurns == 0)
+            {
+                strengthBonus = 0;
+                cout << MAGENTA << label << "Strength boost wore off!" << RESET << endl;
+            }
+        }
+    }
 
-	bool isAlive() {
-		return health > 0; // is alive if health is above 0 
-	}
+    bool isAlive() {
+        return health > 0; // is alive if health is above 0 
+    }
 
-	int getHealth() {
-		return health;
-	}
+    int getHealth() {
+        return health;
+    }
 
-	string getType() {
-		return type;
-	}
+    string getType() {
+        return type;
+    }
 };
 
 
 
 
 
-// character types, could be whatever
+// character types
 class Light : public Character { // Light class, low health, high attack, low defense
 public:
-	Light() : Character("Light", 80, 18, 5) {}
+    Light() : Character("Light", 80, 18, 5) {}
 };
 
 class Medium : public Character { // Medium class, med health, med attack, med defense
 public:
-	Medium() : Character("Medium", 100, 14, 8) {}
+    Medium() : Character("Medium", 100, 14, 8) {}
 };
 
 class Heavy : public Character { // Heavy class, high health, low attack, high defense
 public:
-	Heavy() : Character("Heavy", 125, 11, 12) {}
+    Heavy() : Character("Heavy", 125, 11, 12) {}
 };
 
 
 
 
 
-int main() 
+int main()
 {
 
 
     int choice;
 
     // starting screen
-    cout << "CE222 Final Project by Troy Lagasse, ADD NAMES HERE" << endl;
+    cout << "CE222 Final Project by Troy Lagasse, Cody Overgaard" << endl;
     cout << GREEN << "1. Start Game" << RESET << endl;
     cout << RED << "2. Quit Game" << RESET << endl;
     cout << "Choice: ";
     cin >> choice;
 
-    if (choice != 1) 
+    if (choice != 1)
     {
         cout << "\nQuitting Game!" << endl;
         return 0;
@@ -179,7 +178,8 @@ int main()
             cout << RED << "Invalid Choice!" << RESET << endl;
             continue;
         }
-  
+
+        bool quitGame = false;
 
         // character selection 
         cout << "\nChoose your character type: " << endl;
@@ -241,11 +241,12 @@ int main()
             }
             else if (action == 3) {
                 cout << "Exiting game..." << endl;
+                quitGame = true;
                 break;
             }
 
-            if (!enemy->isAlive()) 
-            break;
+            if (!enemy->isAlive())
+                break;
 
             cout << "\nEnemy Turn!" << endl;
 
@@ -278,6 +279,13 @@ int main()
 
             player->updateEffects();
             enemy->updateEffects();
+        }
+
+        // handles quit before results
+        if (quitGame) {
+            delete player;
+            delete enemy;
+            break; // exits outer loop
         }
 
         // results
