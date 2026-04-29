@@ -119,7 +119,7 @@ int main()
     int choice;
 
     // starting screen
-    cout << "CE222 Final Project by Troy Lagasse, Cody Overgaard" << endl;
+    cout << "CE222 Final Project by Troy Lagasse, Cody Overgaard,Carlos Rodriguez" << endl;
     cout << GREEN << "1. Start Game" << RESET << endl;
     cout << RED << "2. Quit Game" << RESET << endl;
     cout << "Choice: ";
