@@ -15,9 +15,14 @@ protected:
 	int strengthBonus = 0; // how much extra attack is active
 	int strengthTurns = 0; // how many turns left;
 	string type; // light, med, etc
+	string label = "Player";
 public:
 	Character(string t, int h, int a, int d) : type(t), health(h), attack(a), defense(d) {}
 	virtual ~Character() {}
+
+	void setLabel(string l){
+		label = l;
+	}
 
 	virtual void attackTarget(Character& target) { // call this when attacking
 		random_device rd;
@@ -38,13 +43,13 @@ public:
 
 	void heal() {
 		health += 15;
-		cout << "You healed 15 HP!" << endl;
+		cout << label << " healed 15 HP!" << endl;
 	}
 
 	void strength() {
 		strengthBonus += 5;
 		strengthTurns += 4;
-		cout << "You gained +5 attack for 3 turns!" << endl;
+		cout << label << " gained +5 attack for 3 turns!" << endl;
 	}
 
 	void updateEffects() 
@@ -55,7 +60,7 @@ public:
 			if (strengthTurns == 0) 
 			{
 				strengthBonus = 0;
-				cout << "Strength boost wore off!" << endl;
+				cout << label << " Strength boost wore off!" << endl;
 			}
 		}
 	}
@@ -107,6 +112,9 @@ int main() {
 	int strengthPotAmount = 3;
 	int healthPotAmount = 5;
 
+	int enemyHealthPotAmount = 2;
+	int enemyStrengthPotAmount = 1;
+
 	cout << "Choose your character type: " << endl;
 	cout << "1. Light" << endl;
 	cout << "2. Medium" << endl;
@@ -122,6 +130,9 @@ int main() {
 		player = new Heavy();
 
 	enemy = new Heavy(); // temp enemy for testing
+
+	player->setLabel("You");     
+	enemy->setLabel("Enemy");
 
 	cout << "\nYou chose: " << player->getType() << endl;
 	cout << "\nEnemy chose: " << enemy->getType() << endl;
@@ -189,8 +200,33 @@ int main() {
 		if (!enemy->isAlive()) // if is not alive
 			break;
 
-		cout << "\nEnemy Attacks!" << endl;
-		enemy->attackTarget(*player);
+	cout << "\nEnemy Turn!" << endl;
+
+	int enemyAction = rand() % 2;
+
+	if (enemyAction == 1 && (enemyHealthPotAmount > 0 || enemyStrengthPotAmount > 0)) {
+
+		int potionChoice = rand() % 2;
+
+		if (potionChoice == 0 && enemyHealthPotAmount > 0) {
+		enemy->heal();
+		enemyHealthPotAmount--;
+		}
+		else if (potionChoice == 1 && enemyStrengthPotAmount > 0) {
+		enemy->strength();
+		enemyStrengthPotAmount--;
+		}
+		else {
+			cout << "Enemy attacks instead!" << endl;
+			enemy->attackTarget(*player);
+		}
+	}
+else {
+	cout << "Enemy Attacks!" << endl;
+	enemy->attackTarget(*player);
+	}
+
+		
 		cout << "Player HP: " << player->getHealth() << endl;
 
 		player->updateEffects();
