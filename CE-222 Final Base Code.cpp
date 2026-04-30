@@ -252,9 +252,9 @@ int main()
 
         // choose character type
         cout << "\nChoose your character type: " << endl;
-        cout << "1. Light" << endl;
-        cout << "2. Medium" << endl;
-        cout << "3. Heavy" << endl;
+        cout << "1. Light (Inflict High Damage, Low Health || Special Move: DOUBLE STRIKE)" << endl;
+        cout << "2. Medium (Balanced Damage and Health || Special Move: LIFE STEAL)" << endl;
+        cout << "3. Heavy (Inflict Low Damage, High Health || Special Move: FORTIFY)" << endl;
         cout << "Choice: ";
         cin >> choice;
 
@@ -279,7 +279,7 @@ int main()
             cout << "1. Attack" << endl;
             cout << "2. Use Potion" << endl;
             if (player->getSpecialCooldown() != 0)
-                cout << "3. Special Move (Cooldown: " << player->getSpecialCooldown() << ")" << endl;
+                cout << "3. Special Move (Cooldown: " << player->getSpecialCooldown() << " turns)" << endl;
             else
                 cout << "3. Special Move (SPECIAL READY!!)" << endl;
             cout << "4. Quit" << endl;
@@ -363,7 +363,7 @@ int main()
                 }
             }
 
-            cout << "Player HP: " << player->getHealth() << endl;
+            cout << BLUE << "Player HP: " << player->getHealth() << RESET << endl;
 
             player->updateEffects();
             enemy->updateEffects();
