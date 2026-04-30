@@ -252,9 +252,9 @@ int main()
 
         // choose character type
         cout << "\nChoose your character type: " << endl;
-        cout << "1. Light (Inflict High Damage, Low Health || Special Move: DOUBLE STRIKE)" << endl;
-        cout << "2. Medium (Balanced Damage and Health || Special Move: LIFE STEAL)" << endl;
-        cout << "3. Heavy (Inflict Low Damage, High Health || Special Move: FORTIFY)" << endl;
+        cout << CYAN << "1. Light (Inflict High Damage, Low Health || Special Move: DOUBLE STRIKE)" << RESET << endl;
+        cout << GREEN << "2. Medium (Balanced Damage and Health || Special Move: LIFE STEAL)" << RESET << endl;
+        cout << BLUE << "3. Heavy (Inflict Low Damage, High Health || Special Move: FORTIFY)" << RESET << endl;
         cout << "Choice: ";
         cin >> choice;
 
