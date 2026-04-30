@@ -1,6 +1,5 @@
 #include<iostream>
 #include<string>
-#include<cstdlib> // for random number generator
 #include<random>
 
 // colors for text output
@@ -14,17 +13,23 @@
 
 using namespace std;
 
+// single RNG for entire program
+mt19937 gen(random_device{}());
 
-
-class Character { // base character class, to be inherited from
+class Character {
 protected:
     int health;
     int attack;
     int defense;
-    int strengthBonus = 0; // how much extra attack is active
-    int strengthTurns = 0; // how many turns left;
-    string type; // light, med, etc
+    int strengthBonus = 0;
+    int strengthTurns = 0;
+    int defenseBonus = 0;
+    int defenseTurns = 0;
+    int specialCooldown = 0;
+    int maxCooldown = 6;
+    string type;
     string label = "Player";
+
 public:
     Character(string t, int h, int a, int d) : type(t), health(h), attack(a), defense(d) {}
     virtual ~Character() {}
@@ -33,21 +38,29 @@ public:
         label = l;
     }
 
-    virtual void attackTarget(Character& target) { // call this when attacking
-        random_device rd;
-        mt19937 gen(rd());
+    virtual void attackTarget(Character& target) {
         uniform_int_distribution<int> dist(-5, 10);
-        int random = dist(gen); // a more maluable way to choose a random number
-        if (rand() % 5 == 0)
-        {
+        uniform_int_distribution<int> miss(0, 4);
+
+        if (miss(gen) == 0) {
             cout << YELLOW << "Attack has missed!" << RESET << endl;
             return;
         }
-        int damage = (attack + strengthBonus) - target.defense + random;
+
+        int damage = (attack + strengthBonus) - (target.defense + target.defenseBonus) + dist(gen);
         if (damage < 1)
             damage = 1;
-        target.health -= damage; // new health is health - damage done
+
+        target.health -= damage;
         cout << "Attack did " << RED << damage << RESET << " damage!" << endl;
+    }
+
+    virtual void specialMove(Character& target) {
+        if (specialCooldown > 0) {
+            cout << YELLOW << "Special on cooldown (" << specialCooldown << ")" << RESET << endl;
+            return;
+        }
+        cout << "No special move defined.\n";
     }
 
     void heal() {
@@ -57,26 +70,40 @@ public:
 
     void strength() {
         strengthBonus += 5;
-        strengthTurns += 3;
+        strengthTurns += 4;
         cout << MAGENTA << label << " gained +5 attack for 3 turns!" << RESET << endl;
     }
 
-    void updateEffects()
-    {
-        if (strengthTurns > 0)
-        {
-            cout << "Strength for " << MAGENTA << strengthTurns - 1 << RESET << " remaining turns!!" << endl;
+    void updateEffects() {
+        if (strengthTurns > 0) {
+            cout << label << ": Strength for " << MAGENTA << strengthTurns - 1 << RESET << " remaining turns!!" << endl;
             strengthTurns--;
-            if (strengthTurns == 0)
-            {
+            if (strengthTurns == 0) {
                 strengthBonus = 0;
                 cout << MAGENTA << label << "Strength boost wore off!" << RESET << endl;
+            }
+        }
+
+        if (specialCooldown > 0)
+            specialCooldown--;
+
+        if (defenseTurns > 0)
+        {
+            cout << label << ": Defense boost for "
+                 << BLUE << defenseTurns - 1 << RESET << " remaining turns!!" << endl;
+
+            defenseTurns--;
+
+            if (defenseTurns == 0)
+            {
+                defenseBonus = 0;
+                cout << BLUE << label << " defense boost wore off!" << RESET << endl;
             }
         }
     }
 
     bool isAlive() {
-        return health > 0; // is alive if health is above 0 
+        return health > 0;
     }
 
     int getHealth() {
@@ -86,40 +113,83 @@ public:
     string getType() {
         return type;
     }
+
+    void takeDamage(int dmg) {
+        health -= dmg;
+    }
+
+    void healAmount(int amount) {
+        health += amount;
+    }
+
+    int getSpecialCooldown() {
+        return specialCooldown;
+    }
 };
-
-
-
-
 
 // character types
-class Light : public Character { // Light class, low health, high attack, low defense
+class Light : public Character {
 public:
     Light() : Character("Light", 80, 18, 5) {}
+
+    void specialMove(Character& target) override {
+        if (specialCooldown > 0) {
+            cout << "Light special on cooldown!\n";
+            return;
+        }
+
+        int damage = attack * 2;
+        target.takeDamage(damage);
+        cout << CYAN << label << " used DOUBLE STRIKE for " << damage << " damage!" << RESET << endl;
+
+        specialCooldown = maxCooldown;
+    }
 };
 
-class Medium : public Character { // Medium class, med health, med attack, med defense
+class Medium : public Character {
 public:
     Medium() : Character("Medium", 100, 14, 8) {}
+
+    void specialMove(Character& target) override {
+        if (specialCooldown > 0) {
+            cout << "Medium special on cooldown!\n";
+            return;
+        }
+
+        int damage = attack + 5;
+        target.takeDamage(damage);
+        healAmount(10);
+        health += 10;
+        cout << GREEN << label << " used LIFE STEAL: " << damage << " damage + heal 10!" << RESET << endl;
+
+
+        specialCooldown = maxCooldown;
+    }
 };
 
-class Heavy : public Character { // Heavy class, high health, low attack, high defense
+class Heavy : public Character {
 public:
     Heavy() : Character("Heavy", 125, 11, 12) {}
+
+    void specialMove(Character& target) override {
+        if (specialCooldown > 0) {
+            cout << "Heavy special on cooldown!\n";
+            return;
+        }
+
+        defenseBonus += 5;
+        defenseTurns = 4;
+        cout << BLUE << label << " used FORTIFY: Defense increased!" << RESET << endl;
+
+        specialCooldown = maxCooldown;
+    }
 };
-
-
-
-
 
 int main()
 {
-
-
     int choice;
 
-    // starting screen
-    cout << "CE222 Final Project by Troy Lagasse, Cody Overgaard,Carlos Rodriguez" << endl;
+    cout << "CE222 Final Project by Troy Lagasse, Cody Overgaard, Carlos Rodriguez" << endl;
     cout << GREEN << "1. Start Game" << RESET << endl;
     cout << RED << "2. Quit Game" << RESET << endl;
     cout << "Choice: ";
@@ -131,11 +201,10 @@ int main()
         return 0;
     }
 
-    while (true) { // outer loop
+    while (true) {
 
         Character* player;
         Character* enemy;
-        int choice;
         int strengthPotAmount;
         int healthPotAmount;
         int enemyHealthPotAmount;
@@ -181,7 +250,7 @@ int main()
 
         bool quitGame = false;
 
-        // character selection 
+        // choose character type
         cout << "\nChoose your character type: " << endl;
         cout << "1. Light" << endl;
         cout << "2. Medium" << endl;
@@ -202,29 +271,32 @@ int main()
         cout << "\nYou chose: " << player->getType() << endl;
         cout << "\nEnemy chose: " << enemy->getType() << endl;
 
-        // combat loop 
-        while (player->isAlive() && enemy->isAlive()) {
+        while (player->isAlive() && enemy->isAlive())
+        {
             int action;
 
             cout << "\nChoose an action:" << endl;
             cout << "1. Attack" << endl;
             cout << "2. Use Potion" << endl;
-            cout << "3. Quit" << endl;
+            if (player->getSpecialCooldown() != 0)
+                cout << "3. Special Move (Cooldown: " << player->getSpecialCooldown() << ")" << endl;
+            else
+                cout << "3. Special Move (SPECIAL READY!!)" << endl;
+            cout << "4. Quit" << endl;
             cout << "Choice: ";
             cin >> action;
 
-            if (action == 1) {
-                cout << "\nPlayer Attacks!" << endl;
+            if (action == 1)
+            {
                 player->attackTarget(*enemy);
                 cout << RED << "Enemy HP: " << enemy->getHealth() << RESET << endl;
             }
-            else if (action == 2) {
+            else if (action == 2)
+            {
                 int potionSelect;
 
-                cout << "\nSelect Potion Type to use: " << endl;
-                cout << "1. Heal (" << healthPotAmount << ")" << endl;
+                cout << "\n1. Heal (" << healthPotAmount << ")" << endl;
                 cout << "2. Strength (" << strengthPotAmount << ")" << endl;
-                cout << "Choice: ";
                 cin >> potionSelect;
 
                 if (potionSelect == 1 && healthPotAmount > 0) {
@@ -239,8 +311,12 @@ int main()
                     cout << RED << "Invalid or no potions left." << RESET << endl;
                 }
             }
-            else if (action == 3) {
-                cout << "Exiting game..." << endl;
+            else if (action == 3)
+            {
+                player->specialMove(*enemy);
+                cout << RED << "Enemy HP: " << enemy->getHealth() << RESET << endl;
+            }
+            else if (action == 4) {
                 quitGame = true;
                 break;
             }
@@ -250,11 +326,17 @@ int main()
 
             cout << "\nEnemy Turn!" << endl;
 
-            int enemyAction = rand() % 2;
+            uniform_int_distribution<int> ai(0,2);
+            int enemyAction = ai(gen);
 
-            if (enemyAction == 1 && (enemyHealthPotAmount > 0 || enemyStrengthPotAmount > 0)) {
+            if (enemyAction == 0) {
+                cout << "Enemy Attacks!" << endl;
+                enemy->attackTarget(*player);
+            }
+            else if (enemyAction == 1 && (enemyHealthPotAmount > 0 || enemyStrengthPotAmount > 0)) {
 
-                int potionChoice = rand() % 2;
+                uniform_int_distribution<int> potion(0,1);
+                int potionChoice = potion(gen);
 
                 if (potionChoice == 0 && enemyHealthPotAmount > 0) {
                     enemy->heal();
@@ -269,11 +351,17 @@ int main()
                     enemy->attackTarget(*player);
                 }
             }
-            else {
-                cout << "Enemy Attacks!" << endl;
-                enemy->attackTarget(*player);
-            }
+            else if (enemyAction == 2) {
 
+                if (enemy->getSpecialCooldown() == 0) {
+                    cout << CYAN << "Enemy uses SPECIAL!" << RESET << endl;
+                    enemy->specialMove(*player);
+                }
+                else {
+                    cout << "Enemy attacks!" << endl;
+                    enemy->attackTarget(*player);
+                }
+            }
 
             cout << "Player HP: " << player->getHealth() << endl;
 
@@ -281,14 +369,12 @@ int main()
             enemy->updateEffects();
         }
 
-        // handles quit before results
         if (quitGame) {
             delete player;
             delete enemy;
-            break; // exits outer loop
+            break;
         }
 
-        // results
         if (player->isAlive())
             cout << YELLOW << "\nYou Win!" << RESET << endl;
         else
@@ -297,17 +383,14 @@ int main()
         delete player;
         delete enemy;
 
-        //play again prompt
         int again;
         cout << "1. Play Again" << endl;
-        cout << "2. Quit Game" << endl;
-        cout << "Choice: ";
+        cout << "2. Quit" << endl;
+        cout << "Choice:";
         cin >> again;
 
-        if (again != 1) {
-            cout << "\nThanks for playing!" << endl;
-            break; // exit outer loop
-        }
+        if (again != 1)
+            break;
     }
 
     return 0;
