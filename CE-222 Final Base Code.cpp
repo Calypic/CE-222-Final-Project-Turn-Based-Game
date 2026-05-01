@@ -167,20 +167,21 @@ public:
     }
 };
 
+// Heavy class A tank-style character that has high health and high defense
 class Heavy : public Character {
 public:
-    Heavy() : Character("Heavy", 125, 11, 12) {}
+    Heavy() : Character("Heavy", 125, 11, 12) {} //Initializes the Heavy character with a name, health, attack, and defense stats
 
     void specialMove(Character& target) override {
         if (specialCooldown > 0) {
             cout << "Heavy special on cooldown!\n";
             return;
         }
-
+        //applys a defense boost
         defenseBonus += 5;
         defenseTurns = 4;
-        cout << BLUE << label << " used FORTIFY: Defense increased!" << RESET << endl;
-
+        cout << BLUE << label << " used FORTIFY: Defense increased!" << RESET << endl; // Displays when the ability has been used 
+        //resets the cooldown after using it
         specialCooldown = maxCooldown;
     }
 };
